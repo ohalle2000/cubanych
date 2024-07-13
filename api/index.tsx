@@ -115,8 +115,7 @@ const contractAbi = [
 ]
 
 app.frame('/', (c) => {
-  const { buttonValue, inputText, status } = c
-  const fruit = inputText || buttonValue
+  const { status } = c
   return c.res({
     image: (
       <div
@@ -157,7 +156,6 @@ app.frame('/', (c) => {
     action: '/wait-results',
     intents: [
       <Button.Transaction target="/dice">Roll</Button.Transaction>,
-      status === 'response' && <Button.Reset>Reset</Button.Reset>,
     ],
   })
 })
@@ -187,7 +185,7 @@ app.frame('/wait-results', (c) => {
 const { Image } = createSystem()
 
 function getDiceImage(roll: number) {
-  const imageSrc = `/icon.png`;
+  const imageSrc = `/${roll}.jpeg`;
   return <Image src={imageSrc} objectFit="contain" height="256" width="256" />
 }
 
@@ -216,7 +214,6 @@ app.frame('/result-dice/:transactionId', async (c) => {
       image: getDiceImage(roll),
       intents: [
         <Button value="play-again"> {message}</Button>,
-        // <Button.Reset>Return</Button.Reset>
       ],
     });
   } catch (error) {
