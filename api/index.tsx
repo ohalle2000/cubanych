@@ -175,7 +175,7 @@ app.frame('/wait-results', (c) => {
 
   return c.res({
     action: `/result-dice/${transactionId}`,
-    image: '/dice_all.jpg',
+    image: '/roll.gif',
     intents: [
       <Button>Wait 5 seconds for the result</Button>,
     ]
