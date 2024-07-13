@@ -2,7 +2,11 @@ import { Button, Frog, TextInput } from 'frog'
 import { devtools } from 'frog/dev'
 import { serveStatic } from 'frog/serve-static'
 // import { neynar } from 'frog/hubs'
-import { handle } from 'frog/vercel'
+import { handle } from 'frog/vercel';
+import { ethers } from 'ethers'
+import { config } from 'dotenv';
+
+config();
 
 // Uncomment to use Edge Runtime.
 // export const config = {
@@ -17,8 +21,9 @@ export const app = new Frog({
   // Supply a Hub to enable frame verification.
   // hub: neynar({ apiKey: 'NEYNAR_FROG_FM' })
 })
+const provider = new ethers.AlchemyProvider('arbitrum')
 
-const contractAddress = '0xac20527C5Fd1C0aEb95E5d7108187450Aa165606' as string;
+const contractAddress = '0xA67f50c3B27F2a832DD9EeAbb4ec179603d20F96' as string;
 const contractAbi = [
   {
       "inputs": [],
@@ -44,6 +49,12 @@ const contractAbi = [
               "indexed": false,
               "internalType": "uint256",
               "name": "amountWon",
+              "type": "uint256"
+          },
+          {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "roll",
               "type": "uint256"
           }
       ],
@@ -142,6 +153,7 @@ app.frame('/', (c) => {
         </div>
       </div>
     ),
+    action: '/wait-results',
     intents: [
       <Button.Transaction target="/dice">Roll</Button.Transaction>,
       status === 'response' && <Button.Reset>Reset</Button.Reset>,
@@ -158,6 +170,98 @@ app.transaction('/dice', async (c) => {
     value: BigInt(100000000000000),
   });
 });
+
+app.frame('/wait-results', (c) => {
+  const { transactionId } = c;
+
+  return c.res({
+    action: `/result-dice/${transactionId}`,
+    image: '/dice_all.jpg',
+    intents: [
+      <Button>Wait 10 seconds for the result</Button>,
+    ]
+  });
+});
+
+function getDiceImage(roll: number) {
+  const imageSrc = `/icon.png`;
+  return <Image src={imageSrc} objectFit="contain" height="256" width="256" />
+}
+
+// App frame handling function
+app.frame('/result-dice/:buttonIndex/:transactionId', async (c) => {
+  const buttonIndex = c.req.param('buttonIndex');
+  const transactionId = c.req.param('transactionId');
+
+  if (!buttonIndex) {
+    throw new Error('Invalid button value');
+  }
+
+  if (!transactionId) {
+    throw new Error('Transaction ID is required');
+  }
+
+  try {
+    const gameResult = await getGameResult(transactionId);
+
+
+    if (!gameResult) {
+      throw new Error('Unable to fetch game result');
+    }
+
+    const { roll, amountWon } = gameResult;
+    const message = `You won ${amountWon} ETH. Play again?`
+
+    return c.res({
+      action: '/',
+      imageOptions: { width: 1024, height: 1024 },
+      image: getDiceImage(roll),
+      intents: [
+        <Button value="play-again"> {message} </Button>,
+        <Button.Reset>Return</Button.Reset>
+      ],
+    });
+  } catch (error) {
+    console.error("Error handling frame:", error);
+    throw new Error('An error occurred while processing your request.');
+  }
+});
+
+// Function to get game result from transaction hash
+async function getGameResult(txHash: string): Promise<{ roll: ethers.BigNumber, amountWon: ethers.BigNumber } | null> {
+  try {
+    // Fetch the transaction receipt
+    const receipt = await provider.waitForTransaction(txHash);
+
+    if (!receipt) {
+      console.log("Transaction not found");
+      return null;
+    }
+
+    // Initialize contract instance
+    const contract = new ethers.Contract(contractAddress, contractAbi, provider);
+
+    // Parse logs for GamePlayed event
+    const gamePlayedEvent = receipt.logs.map(log => {
+      try {
+        return contract.interface.parseLog(log);
+      } catch (error) {
+        return null;
+      }
+    }).filter(event => event && event.name === 'GamePlayed')[0];
+
+    if (gamePlayedEvent) {
+      const { player, won, amountWon, roll } = gamePlayedEvent.args;
+      return { roll, amountWon };
+    } else {
+      console.log("No GamePlayed event found in transaction logs");
+      return null;
+    }
+  } catch (error) {
+    console.error("Error fetching transaction receipt:", error);
+    return null;
+  }
+}
 
 // @ts-ignore
 const isEdgeFunction = typeof EdgeFunction !== 'undefined'
