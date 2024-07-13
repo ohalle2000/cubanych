@@ -9,15 +9,17 @@ import { handle } from 'frog/vercel'
 //   runtime: 'edge',
 // }
 
+
 export const app = new Frog({
   assetsPath: '/',
   basePath: '/api',
+  title: 'Dice Roll',
   // Supply a Hub to enable frame verification.
   // hub: neynar({ apiKey: 'NEYNAR_FROG_FM' })
 })
 
 const contractAddress = '0xac20527C5Fd1C0aEb95E5d7108187450Aa165606' as string;
-const contractABI = [
+const contractAbi = [
   {
       "inputs": [],
       "stateMutability": "nonpayable",
@@ -141,14 +143,21 @@ app.frame('/', (c) => {
       </div>
     ),
     intents: [
-      <TextInput placeholder="Enter custom fruit..." />,
-      <Button value="apples">Apples</Button>,
-      <Button value="oranges">Oranges</Button>,
-      <Button value="bananas">Bananas</Button>,
+      <Button.Transaction target="/dice">Roll</Button.Transaction>,
       status === 'response' && <Button.Reset>Reset</Button.Reset>,
     ],
   })
 })
+
+app.transaction('/dice', async (c) => {
+  return c.contract({
+    abi: contractAbi,
+    chainId: 'eip155:42161',
+    functionName: 'playGame',
+    to: `0x${contractAddress.substring(2)}`,
+    value: BigInt(100000000000000),
+  });
+});
 
 // @ts-ignore
 const isEdgeFunction = typeof EdgeFunction !== 'undefined'
