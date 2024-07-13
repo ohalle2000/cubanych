@@ -2,11 +2,12 @@ import { Button, Frog, TextInput } from 'frog'
 import { devtools } from 'frog/dev'
 import { serveStatic } from 'frog/serve-static'
 // import { neynar } from 'frog/hubs'
+import { createSystem } from 'frog/ui'
 import { handle } from 'frog/vercel';
 import { ethers } from 'ethers'
-import { config } from 'dotenv';
+// import { config } from 'dotenv';
 
-config();
+// config();
 
 // Uncomment to use Edge Runtime.
 // export const config = {
@@ -21,7 +22,7 @@ export const app = new Frog({
   // Supply a Hub to enable frame verification.
   // hub: neynar({ apiKey: 'NEYNAR_FROG_FM' })
 })
-const provider = new ethers.AlchemyProvider('arbitrum')
+const provider = new ethers.InfuraProvider('arbitrum', 'ae187603145b4a27b749631af33080f7')
 
 const contractAddress = '0xA67f50c3B27F2a832DD9EeAbb4ec179603d20F96' as string;
 const contractAbi = [
@@ -178,10 +179,12 @@ app.frame('/wait-results', (c) => {
     action: `/result-dice/${transactionId}`,
     image: '/dice_all.jpg',
     intents: [
-      <Button>Wait 10 seconds for the result</Button>,
+      <Button>Wait 5 seconds for the result</Button>,
     ]
   });
 });
+
+const { Image } = createSystem()
 
 function getDiceImage(roll: number) {
   const imageSrc = `/icon.png`;
@@ -189,13 +192,8 @@ function getDiceImage(roll: number) {
 }
 
 // App frame handling function
-app.frame('/result-dice/:buttonIndex/:transactionId', async (c) => {
-  const buttonIndex = c.req.param('buttonIndex');
+app.frame('/result-dice/:transactionId', async (c) => {
   const transactionId = c.req.param('transactionId');
-
-  if (!buttonIndex) {
-    throw new Error('Invalid button value');
-  }
 
   if (!transactionId) {
     throw new Error('Transaction ID is required');
@@ -217,7 +215,7 @@ app.frame('/result-dice/:buttonIndex/:transactionId', async (c) => {
       imageOptions: { width: 1024, height: 1024 },
       image: getDiceImage(roll),
       intents: [
-        <Button value="play-again"> {message} </Button>,
+        <Button value="play-again"> Play Again </Button>,
         <Button.Reset>Return</Button.Reset>
       ],
     });
