@@ -16,6 +16,90 @@ export const app = new Frog({
   // hub: neynar({ apiKey: 'NEYNAR_FROG_FM' })
 })
 
+const contractAddress = '0xac20527C5Fd1C0aEb95E5d7108187450Aa165606' as string;
+const contractABI = [
+  {
+      "inputs": [],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+  },
+  {
+      "anonymous": false,
+      "inputs": [
+          {
+              "indexed": true,
+              "internalType": "address",
+              "name": "player",
+              "type": "address"
+          },
+          {
+              "indexed": false,
+              "internalType": "bool",
+              "name": "won",
+              "type": "bool"
+          },
+          {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "amountWon",
+              "type": "uint256"
+          }
+      ],
+      "name": "GamePlayed",
+      "type": "event"
+  },
+  {
+      "anonymous": false,
+      "inputs": [
+          {
+              "indexed": true,
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+          },
+          {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+          }
+      ],
+      "name": "Withdrawal",
+      "type": "event"
+  },
+  {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+          {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+          }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+  },
+  {
+      "inputs": [],
+      "name": "playGame",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+  },
+  {
+      "inputs": [],
+      "name": "withdraw",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+  },
+  {
+      "stateMutability": "payable",
+      "type": "receive"
+  }
+]
+
 app.frame('/', (c) => {
   const { buttonValue, inputText, status } = c
   const fruit = inputText || buttonValue
@@ -52,7 +136,7 @@ app.frame('/', (c) => {
         >
           {status === 'response'
             ? `Nice choice.${fruit ? ` ${fruit.toUpperCase()}!!` : ''}`
-            : 'Welcome!'}
+            : 'Welcome to Dice Roll! Use your 0.0001 ETH to play a game. You can win up to 0.0002 ETH depending on dice result!'}
         </div>
       </div>
     ),
