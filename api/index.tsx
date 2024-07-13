@@ -149,7 +149,7 @@ app.frame('/', (c) => {
           }}
         >
           {status === 'response'
-            ? `Nice choice.${fruit ? ` ${fruit.toUpperCase()}!!` : ''}`
+            ? 'Welcome to Dice Roll! Use your 0.0001 ETH to play a game. You can win up to 0.0002 ETH depending on dice result!'
             : 'Welcome to Dice Roll! Use your 0.0001 ETH to play a game. You can win up to 0.0002 ETH depending on dice result!'}
         </div>
       </div>
@@ -208,15 +208,15 @@ app.frame('/result-dice/:transactionId', async (c) => {
     }
 
     const { roll, amountWon } = gameResult;
-    const message = `You won ${amountWon} ETH. Play again?`
+    const message = `You won ${ethers.formatUnits(amountWon, 18)} ETH. Play again?`;
 
     return c.res({
       action: '/',
       imageOptions: { width: 1024, height: 1024 },
       image: getDiceImage(roll),
       intents: [
-        <Button value="play-again"> Play Again </Button>,
-        <Button.Reset>Return</Button.Reset>
+        <Button value="play-again"> {message}</Button>,
+        // <Button.Reset>Return</Button.Reset>
       ],
     });
   } catch (error) {
